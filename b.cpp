@@ -1,80 +1,101 @@
-#pragma GCC optimize("Ofast")
-#pragma GCC target("avx,avx2,fma")
-#include <bits/stdc++.h>
+#include <iostream>
+#include <list>
+#define NIL -1
 using namespace std;
-#define el endl
-#define vi vector<int>
-#define pb push_back
-#define all(v) (v).begin(), (v).end()
-#define ht unordered_map
-#define uset unordered_set
-#define int long long int
-#define lld long double
-#define INF INT_MAX
-void solve();
-int32_t main()
+
+class Graph
 {
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
-    cout.tie(NULL);
-    int t;
-    cin >> t;
-    while (t--)
-    {
-        solve();
-    }
-#ifndef ONLINE_JUDGE
-    cerr << "time taken : " << (float)clock() / CLOCKS_PER_SEC << " secs" << endl;
-#endif
+    int V;
+    list<int> *adj;
+    void APUtil(int v, bool visited[], int disc[], int low[], int parent[], bool ap[]);
+
+public:
+    Graph(int V);
+    void addEdge(int v, int w);
+    void AP();
+};
+
+Graph::Graph(int V)
+{
+    this->V = V;
+    adj = new list<int>[V];
 }
-void solve()
+
+void Graph::addEdge(int v, int w)
 {
-    int n, k, r, c;
-    cin >> n >> k >> r >> c;
-    int flag = 0;
-    char arr[n][n];
-    for (int i = 0; i < n; i++)
-    {
-        for (int j = 0; j < n; j++)
-        {
-            if (k != 1)
-                arr[i][j] = '.';
-            else
-                arr[i][j] = 'X';
-        }
-    }
-    if (k != 1)
-    {
-        r--;
-        c--;
+    adj[v].push_back(w);
+    adj[w].push_back(v);
+}
 
-        if (c >= k)
-            c = c % k;
-        int x = c;
-        int y = r;
-        for (int i = 0; i < n; i++)
+void Graph::APUtil(int u, bool visited[], int disc[], int low[], int parent[], bool ap[])
+{
+
+    static int time = 0;
+
+    int children = 0;
+
+    visited[u] = true;
+
+    disc[u] = low[u] = ++time;
+
+    list<int>::iterator i;
+    for (i = adj[u].begin(); i != adj[u].end(); ++i)
+    {
+        int v = *i;
+
+        if (!visited[v])
         {
-            if (i != 0)
-            {
-                x = x % k;
-            }
-            for (int j = x; j < n; j += k)
-            {
-                arr[y][j] = 'X';
-            }
-            x++;
-            y++;
-            if (y > n - 1)
-                y = 0;
+            children++;
+            parent[v] = u;
+            APUtil(v, visited, disc, low, parent, ap);
+
+            low[u] = min(low[u], low[v]);
+
+            if (parent[u] == NIL && children > 1)
+                ap[u] = true;
+            if (parent[u] != NIL && low[v] >= disc[u])
+                ap[u] = true;
         }
+
+        else if (v != parent[u])
+            low[u] = min(low[u], disc[v]);
+    }
+}
+
+void Graph::AP()
+{
+    bool *visited = new bool[V];
+    int *disc = new int[V];
+    int *low = new int[V];
+    int *parent = new int[V];
+    bool *ap = new bool[V];
+
+    for (int i = 0; i < V; i++)
+    {
+        parent[i] = NIL;
+        visited[i] = false;
+        ap[i] = false;
     }
 
-    for (int i = 0; i < n; i++)
-    {
-        for (int j = 0; j < n; j++)
-        {
-            cout << arr[i][j];
-        }
-        cout << el;
-    }
+    for (int i = 0; i < V; i++)
+        if (visited[i] == false)
+            APUtil(i, visited, disc, low, parent, ap);
+
+    for (int i = 0; i < V; i++)
+        if (ap[i] == true)
+            cout << i << " ";
+}
+
+int main()
+{
+    cout << "Articulation points in first graph \n";
+    Graph g(5);
+    g.addEdge(1, 0);
+    g.addEdge(0, 2);
+    g.addEdge(2, 1);
+    g.addEdge(0, 3);
+    g.addEdge(3, 4);
+    g.AP();
+
+    return 0;
 }
